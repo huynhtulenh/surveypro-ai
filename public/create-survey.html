@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Tạo khảo sát mới - SurveyPro AI">
+    <title>Tạo khảo sát - SurveyPro AI</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .question-item {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+            transition: all var(--transition-base);
+        }
+
+        .question-item:hover {
+            border-color: var(--border-hover);
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-sm);
+            padding-bottom: var(--spacing-sm);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .option-item {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            align-items: center;
+        }
+
+        .option-item input {
+            flex: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Admin page: Create/Edit surveys -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="/dashboard" class="navbar-brand">SurveyPro AI</a>
+            <ul class="navbar-nav">
+                <li><a href="/dashboard" class="nav-link">📋 Khảo sát</a></li>
+                <li><a href="/admin/dashboard" class="nav-link">🏢 Quản lý</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container" style="max-width: 900px; margin-top: 3rem; margin-bottom: 3rem;">
+        <div class="flex-between mb-4">
+            <div>
+                <h1 id="pageTitle">Tạo khảo sát mới</h1>
+                <p class="text-secondary">Thiết kế khảo sát của bạn</p>
+            </div>
+            <a href="/dashboard" class="btn btn-secondary">← Quay lại</a>
+        </div>
+
+        <!-- Survey Info -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h3>Thông tin khảo sát</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="surveyTitle" class="form-label">Tiêu đề khảo sát *</label>
+                    <input type="text" id="surveyTitle" class="form-control" placeholder="VD: Khảo sát về smartphone"
+                        required>
+                </div>
+
+                <div class="form-group">
+                    <label for="surveyDescription" class="form-label">Mô tả</label>
+                    <textarea id="surveyDescription" class="form-control"
+                        placeholder="Mô tả ngắn gọn về khảo sát của bạn" rows="3"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="surveyStatus" class="form-label">Trạng thái</label>
+                    <select id="surveyStatus" class="form-control">
+                        <option value="draft">Nháp</option>
+                        <option value="active" selected>Đang hoạt động</option>
+                        <option value="closed">Đã đóng</option>
+                    </select>
+                    <small class="text-muted">⚠️ Chỉ khảo sát "Đang hoạt động" mới có thể truy cập công khai</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Questions -->
+        <div class="card mb-3">
+            <div class="card-header flex-between">
+                <h3>Câu hỏi</h3>
+                <button onclick="showAddQuestionModal()" class="btn btn-sm btn-primary">+ Thêm câu hỏi</button>
+            </div>
+            <div class="card-body">
+                <div id="questionsContainer">
+                    <p class="text-secondary text-center" style="padding: 2rem 0;">
+                        Chưa có câu hỏi nào. Nhấn "Thêm câu hỏi" để bắt đầu.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-md">
+            <button onclick="saveSurvey()" class="btn btn-success btn-lg">💾 Lưu khảo sát</button>
+            <button onclick="previewSurvey()" class="btn btn-outline btn-lg">👁️ Xem trước</button>
+        </div>
+    </div>
+
+    <!-- Add Question Modal -->
+    <div id="addQuestionModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Thêm câu hỏi</h3>
+                <button class="modal-close" onclick="closeAddQuestionModal()">×</button>
+            </div>
+            <div>
+                <div class="form-group">
+                    <label class="form-label">Loại câu hỏi</label>
+                    <select id="questionType" class="form-control" onchange="updateQuestionForm()">
+                        <option value="text">Văn bản (Text)</option>
+                        <option value="radio">Một lựa chọn (Radio)</option>
+                        <option value="checkbox">Nhiều lựa chọn (Checkbox)</option>
+                        <option value="date">Ngày tháng (Date)</option>
+                        <option value="table-single">Bảng - Một lựa chọn</option>
+                        <option value="table-multiple">Bảng - Nhiều lựa chọn</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Câu hỏi *</label>
+                    <input type="text" id="questionText" class="form-control" placeholder="Nhập câu hỏi của bạn">
+                </div>
+
+                <div class="form-check mb-3">
+                    <input type="checkbox" id="questionRequired" class="form-check-input">
+                    <label for="questionRequired" class="form-check-label">Bắt buộc trả lời</label>
+                </div>
+
+                <!-- Options for radio/checkbox -->
+                <div id="optionsSection" style="display: none;">
+                    <label class="form-label">Các lựa chọn</label>
+                    <div id="optionsList"></div>
+                    <button onclick="addOption()" class="btn btn-sm btn-secondary mt-2">+ Thêm lựa chọn</button>
+                </div>
+
+                <!-- Table config -->
+                <div id="tableSection" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">Hàng (mỗi hàng một dòng)</label>
+                        <textarea id="tableRows" class="form-control" rows="3"
+                            placeholder="iPhone&#10;Samsung&#10;Oppo"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Cột (mỗi cột một dòng)</label>
+                        <textarea id="tableCols" class="form-control" rows="3"
+                            placeholder="Rất thích&#10;Thích&#10;Bình thường&#10;Không thích"></textarea>
+                    </div>
+                </div>
+
+                <div class="flex gap-sm mt-3">
+                    <button onclick="addQuestion()" class="btn btn-primary">Thêm câu hỏi</button>
+                    <button onclick="closeAddQuestionModal()" class="btn btn-secondary">Hủy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        // Protect page - require admin authentication
+        requireAdminAuth();
+        
+        // Update navbar with admin info
+        updateAdminNavbar();
+
+        let questions = [];
+        let editingQuestionIndex = -1;
+        let surveyId = null;
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('id')) {
+            surveyId = urlParams.get('id');
+            loadSurvey(surveyId);
+        }
+
+        async function loadSurvey(id) {
+            try {
+                const data = await adminApi.get(`/surveys/${id}`);
+                const survey = data.survey;
+
+                document.getElementById('pageTitle').textContent = 'Chỉnh sửa khảo sát';
+                document.getElementById('surveyTitle').value = survey.title;
+                document.getElementById('surveyDescription').value = survey.description || '';
+                document.getElementById('surveyStatus').value = survey.status;
+
+                // Convert backend format to frontend format
+                questions = (data.questions || []).map(q => {
+                    const question = {
+                        type: q.type,
+                        question: q.question,
+                        required: q.required,
+                        order: q.order,
+                        tableConfig: q.tableConfig
+                    };
+                    
+                    // Convert 'answers' to 'options' for radio/checkbox
+                    if (q.answers && q.answers.length > 0) {
+                        question.options = q.answers.map(a => ({
+                            label: a.label,
+                            value: a.value
+                        }));
+                    }
+                    
+                    return question;
+                });
+                
+                renderQuestions();
+            } catch (error) {
+                ui.showAlert('Lỗi khi tải khảo sát: ' + error.message, 'error');
+            }
+        }
+
+        function showAddQuestionModal() {
+            document.getElementById('addQuestionModal').classList.add('active');
+            editingQuestionIndex = -1;
+            resetQuestionForm();
+        }
+
+        function closeAddQuestionModal() {
+            document.getElementById('addQuestionModal').classList.remove('active');
+        }
+
+        function resetQuestionForm() {
+            document.getElementById('questionType').value = 'text';
+            document.getElementById('questionText').value = '';
+            document.getElementById('questionRequired').checked = false;
+            document.getElementById('optionsList').innerHTML = '';
+            updateQuestionForm();
+        }
+
+        function updateQuestionForm() {
+            const type = document.getElementById('questionType').value;
+            const optionsSection = document.getElementById('optionsSection');
+            const tableSection = document.getElementById('tableSection');
+
+            optionsSection.style.display = 'none';
+            tableSection.style.display = 'none';
+
+            if (type === 'radio' || type === 'checkbox') {
+                optionsSection.style.display = 'block';
+                if (document.getElementById('optionsList').children.length === 0) {
+                    addOption();
+                    addOption();
+                }
+            } else if (type === 'table-single' || type === 'table-multiple') {
+                tableSection.style.display = 'block';
+            }
+        }
+
+        function addOption() {
+            const optionsList = document.getElementById('optionsList');
+            const optionDiv = document.createElement('div');
+            optionDiv.className = 'option-item';
+            optionDiv.innerHTML = `
+        <input type="text" class="form-control" placeholder="Lựa chọn ${optionsList.children.length + 1}">
+        <button onclick="this.parentElement.remove()" class="btn btn-sm btn-danger">×</button>
+      `;
+            optionsList.appendChild(optionDiv);
+        }
+
+        function addQuestion() {
+            const type = document.getElementById('questionType').value;
+            const text = document.getElementById('questionText').value;
+            const required = document.getElementById('questionRequired').checked;
+
+            if (!text.trim()) {
+                ui.showAlert('Vui lòng nhập câu hỏi', 'error');
+                return;
+            }
+
+            const question = {
+                type,
+                question: text,
+                required,
+                order: questions.length
+            };
+
+            if (type === 'radio' || type === 'checkbox') {
+                const optionInputs = document.querySelectorAll('#optionsList input');
+                question.options = Array.from(optionInputs)
+                    .map((input, index) => ({
+                        label: input.value || `Lựa chọn ${index + 1}`,
+                        value: input.value || `option_${index + 1}`
+                    }))
+                    .filter(opt => opt.label.trim() !== '');
+
+                if (question.options.length === 0) {
+                    ui.showAlert('Vui lòng thêm ít nhất một lựa chọn', 'error');
+                    return;
+                }
+            }
+
+            if (type === 'table-single' || type === 'table-multiple') {
+                const rows = document.getElementById('tableRows').value.split('\n').filter(r => r.trim());
+                const cols = document.getElementById('tableCols').value.split('\n').filter(c => c.trim());
+
+                if (rows.length === 0 || cols.length === 0) {
+                    ui.showAlert('Vui lòng nhập hàng và cột cho bảng', 'error');
+                    return;
+                }
+
+                question.tableConfig = { rows, columns: cols };
+            }
+
+            if (editingQuestionIndex >= 0) {
+                questions[editingQuestionIndex] = question;
+            } else {
+                questions.push(question);
+            }
+
+            renderQuestions();
+            closeAddQuestionModal();
+            ui.showAlert('Đã thêm câu hỏi', 'success');
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById('questionsContainer');
+
+            if (questions.length === 0) {
+                container.innerHTML = `
+          <p class="text-secondary text-center" style="padding: 2rem 0;">
+            Chưa có câu hỏi nào. Nhấn "Thêm câu hỏi" để bắt đầu.
+          </p>
+        `;
+                return;
+            }
+
+            container.innerHTML = questions.map((q, index) => `
+        <div class="question-item fade-in">
+          <div class="question-header">
+            <div style="flex: 1;">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span class="badge badge-primary">${getQuestionTypeLabel(q.type)}</span>
+                ${q.required ? '<span class="badge badge-warning">Bắt buộc</span>' : ''}
+              </div>
+              <h4 style="margin-top: 0.5rem;">${index + 1}. ${q.question}</h4>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+              <button onclick="editQuestion(${index})" class="btn btn-sm btn-secondary">✏️</button>
+              <button onclick="deleteQuestion(${index})" class="btn btn-sm btn-danger">🗑️</button>
+            </div>
+          </div>
+          <div>${renderQuestionPreview(q)}</div>
+        </div>
+      `).join('');
+        }
+
+        function getQuestionTypeLabel(type) {
+            const labels = {
+                'text': 'Văn bản',
+                'radio': 'Một lựa chọn',
+                'checkbox': 'Nhiều lựa chọn',
+                'date': 'Ngày tháng',
+                'table-single': 'Bảng - Một lựa chọn',
+                'table-multiple': 'Bảng - Nhiều lựa chọn'
+            };
+            return labels[type] || type;
+        }
+
+        function renderQuestionPreview(q) {
+            if (q.type === 'text') {
+                return '<input type="text" class="form-control" placeholder="Câu trả lời văn bản" disabled>';
+            } else if (q.type === 'radio' || q.type === 'checkbox') {
+                // Handle both 'options' (frontend) and 'answers' (backend)
+                const opts = q.options || q.answers || [];
+                if (opts.length === 0) {
+                    return '<p class="text-muted">Chưa có lựa chọn</p>';
+                }
+                return opts.map(opt => `
+          <div class="form-check">
+            <input type="${q.type}" class="form-check-input" disabled>
+            <label class="form-check-label">${opt.label}</label>
+          </div>
+        `).join('');
+            } else if (q.type === 'date') {
+                return '<input type="date" class="form-control" disabled>';
+            } else if (q.type === 'table-single' || q.type === 'table-multiple') {
+                if (!q.tableConfig || !q.tableConfig.rows || !q.tableConfig.columns) {
+                    return '<p class="text-muted">Chưa cấu hình bảng</p>';
+                }
+                return `<p class="text-secondary">Bảng: ${q.tableConfig.rows.length} hàng × ${q.tableConfig.columns.length} cột</p>`;
+            }
+            return '';
+        }
+
+        function editQuestion(index) {
+            editingQuestionIndex = index;
+            const q = questions[index];
+
+            document.getElementById('questionType').value = q.type;
+            document.getElementById('questionText').value = q.question;
+            document.getElementById('questionRequired').checked = q.required;
+
+            updateQuestionForm();
+
+            if (q.type === 'radio' || q.type === 'checkbox') {
+                const optionsList = document.getElementById('optionsList');
+                optionsList.innerHTML = '';
+                q.options.forEach(opt => {
+                    const optionDiv = document.createElement('div');
+                    optionDiv.className = 'option-item';
+                    optionDiv.innerHTML = `
+            <input type="text" class="form-control" value="${opt.label}">
+            <button onclick="this.parentElement.remove()" class="btn btn-sm btn-danger">×</button>
+          `;
+                    optionsList.appendChild(optionDiv);
+                });
+            } else if (q.type === 'table-single' || q.type === 'table-multiple') {
+                document.getElementById('tableRows').value = q.tableConfig.rows.join('\n');
+                document.getElementById('tableCols').value = q.tableConfig.columns.join('\n');
+            }
+
+            showAddQuestionModal();
+        }
+
+        function deleteQuestion(index) {
+            if (ui.confirm('Bạn có chắc chắn muốn xóa câu hỏi này?')) {
+                questions.splice(index, 1);
+                renderQuestions();
+                ui.showAlert('Đã xóa câu hỏi', 'success');
+            }
+        }
+
+        async function saveSurvey() {
+            const title = document.getElementById('surveyTitle').value;
+            const description = document.getElementById('surveyDescription').value;
+            const status = document.getElementById('surveyStatus').value;
+
+            if (!title.trim()) {
+                ui.showAlert('Vui lòng nhập tiêu đề khảo sát', 'error');
+                return;
+            }
+
+            if (questions.length === 0) {
+                ui.showAlert('Vui lòng thêm ít nhất một câu hỏi', 'error');
+                return;
+            }
+
+            const surveyData = {
+                title,
+                description,
+                status,
+                questions
+            };
+
+            try {
+                if (surveyId) {
+                    await adminApi.put(`/surveys/${surveyId}`, surveyData);
+                    ui.showAlert('Đã cập nhật khảo sát thành công', 'success');
+                } else {
+                    console.log('Creating survey with data:', surveyData); // Debug
+                    const data = await adminApi.post('/surveys', surveyData);
+                    console.log('Survey created, response:', data); // Debug
+                    
+                    surveyId = data.survey._id;
+                    
+                    // Verify questions were created
+                    if (data.questions && data.questions.length > 0) {
+                        console.log('Questions created:', data.questions.length);
+                        console.log('First question _id:', data.questions[0]._id);
+                    } else {
+                        console.warn('WARNING: No questions returned from backend!');
+                    }
+                    
+                    ui.showAlert('Đã tạo khảo sát thành công', 'success');
+                }
+
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 1000);
+            } catch (error) {
+                console.error('Error saving survey:', error); // Debug
+                ui.showAlert('Lỗi khi lưu khảo sát: ' + error.message, 'error');
+            }
+        }
+
+        function previewSurvey() {
+            if (surveyId) {
+                window.open(`/survey/${surveyId}`, '_blank');
+            } else {
+                ui.showAlert('Vui lòng lưu khảo sát trước khi xem trước', 'warning');
+            }
+        }
+    </script>
+</body>
+
+</html>

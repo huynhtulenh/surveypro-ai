@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - SurveyPro AI</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="/" class="navbar-brand">SurveyPro AI - Admin</a>
+            <ul class="navbar-nav">
+                <li><a href="/login">User Login</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container" style="max-width: 500px; margin-top: 5rem;">
+        <div class="card">
+            <div class="card-header">
+                <h2 style="text-align: center; margin: 0;">🔐 Admin Login</h2>
+            </div>
+            <div class="card-body">
+                <form id="adminLoginForm">
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" id="email" class="form-control" placeholder="admin@company.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password" class="form-label">Mật khẩu</label>
+                        <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
+                        Đăng nhập
+                    </button>
+                </form>
+
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <p class="text-secondary">
+                        Chưa có tài khoản admin?
+                        <a href="/admin/register" style="color: var(--primary);">Đăng ký ngay</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        // Redirect if already logged in as admin
+        const adminToken = localStorage.getItem('adminToken');
+        if (adminToken) {
+            window.location.href = '/dashboard';
+        }
+
+        document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                ui.showLoading();
+
+                const response = await fetch(`${API_BASE_URL}/admins/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Đăng nhập thất bại');
+                }
+
+                // Save admin token and info
+                localStorage.setItem('adminToken', data.token);
+                localStorage.setItem('adminInfo', JSON.stringify(data.admin));
+
+                ui.showAlert('Đăng nhập thành công!', 'success');
+
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 500);
+            } catch (error) {
+                ui.showAlert(error.message, 'error');
+            } finally {
+                ui.hideLoading();
+            }
+        });
+    </script>
+</body>
+
+</html>

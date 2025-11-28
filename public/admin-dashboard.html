@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - SurveyPro AI</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="/dashboard" class="navbar-brand">SurveyPro AI</a>
+            <ul class="navbar-nav" id="adminNav">
+                <li><a href="/dashboard" class="nav-link">📋 Khảo sát</a></li>
+                <li><a href="/admin/dashboard" class="nav-link">🏢 Quản lý</a></li>
+                <!-- Dynamic items will be added here -->
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container" style="margin-top: 3rem; margin-bottom: 3rem;">
+        <!-- Header -->
+        <div class="mb-4">
+            <h1>Admin Dashboard</h1>
+            <p class="text-secondary" id="companyName"></p>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+            <div class="card" style="background: var(--gradient-primary); color: white;">
+                <div class="card-body" style="text-align: center;">
+                    <div style="font-size: 3rem; font-weight: 700;" id="totalAdmins">0</div>
+                    <div style="font-size: 1.125rem;">Tổng Admins</div>
+                </div>
+            </div>
+
+            <div class="card" style="background: var(--gradient-accent); color: white;">
+                <div class="card-body" style="text-align: center;">
+                    <div style="font-size: 3rem; font-weight: 700;" id="totalUsers">0</div>
+                    <div style="font-size: 1.125rem;">Tổng Users</div>
+                </div>
+            </div>
+
+            <div class="card" style="background: var(--gradient-success); color: white;">
+                <div class="card-body" style="text-align: center;">
+                    <div style="font-size: 3rem; font-weight: 700;" id="totalSurveys">0</div>
+                    <div style="font-size: 1.125rem;">Tổng Khảo sát</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="card">
+            <div class="card-header">
+                <div
+                    style="display: flex; gap: 1rem; border-bottom: 2px solid var(--border-color); margin: -1rem -1rem 1rem -1rem; padding: 0 1rem;">
+                    <button class="tab-btn active" onclick="switchTab('companies')" id="companiesTab">
+                        🏢 Công ty
+                    </button>
+                    <button class="tab-btn" onclick="switchTab('admins')" id="adminsTab">
+                        👤 Admins
+                    </button>
+                </div>
+            </div>
+
+            <!-- Companies Tab -->
+            <div id="companiesContent" class="tab-content active">
+                <div class="card-body">
+                    <div class="flex-between mb-3">
+                        <h3>Danh sách công ty</h3>
+                        <button onclick="showCreateCompanyModal()" class="btn btn-primary">+ Tạo công ty</button>
+                    </div>
+
+                    <div id="companiesContainer">
+                        <div class="flex-center" style="padding: 3rem 0;">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admins Tab -->
+            <div id="adminsContent" class="tab-content" style="display: none;">
+                <div class="card-body">
+                    <div class="flex-between mb-3">
+                        <h3>Danh sách admins</h3>
+                        <button onclick="showCreateAdminModal()" class="btn btn-primary">+ Thêm admin</button>
+                    </div>
+
+                    <div id="adminsContainer">
+                        <div class="flex-center" style="padding: 3rem 0;">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Company Modal -->
+    <div id="createCompanyModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Tạo công ty mới</h3>
+                <button class="modal-close" onclick="closeCreateCompanyModal()">×</button>
+            </div>
+            <div>
+                <div class="form-group">
+                    <label class="form-label">Tên công ty *</label>
+                    <input type="text" id="newCompanyName" class="form-control" placeholder="VD: Acme Corporation">
+                </div>
+                <div class="flex gap-sm mt-3">
+                    <button onclick="createCompany()" class="btn btn-primary">Tạo</button>
+                    <button onclick="closeCreateCompanyModal()" class="btn btn-secondary">Hủy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Admin Modal -->
+    <div id="createAdminModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Thêm admin mới</h3>
+                <button class="modal-close" onclick="closeCreateAdminModal()">×</button>
+            </div>
+            <div>
+                <div class="form-group">
+                    <label class="form-label">Email *</label>
+                    <input type="email" id="newAdminEmail" class="form-control" placeholder="admin@company.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Mật khẩu *</label>
+                    <input type="password" id="newAdminPassword" class="form-control" placeholder="Tối thiểu 6 ký tự">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Số điện thoại</label>
+                    <input type="tel" id="newAdminPhone" class="form-control" placeholder="+84123456789">
+                </div>
+                <div class="flex gap-sm mt-3">
+                    <button onclick="createAdmin()" class="btn btn-primary">Thêm</button>
+                    <button onclick="closeCreateAdminModal()" class="btn btn-secondary">Hủy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        let currentCompanyId = null;
+        let adminInfo = null;
+
+        // Check authentication
+        const adminToken = localStorage.getItem('adminToken');
+        if (!adminToken) {
+            window.location.href = '/admin/login';
+        }
+
+        // Load admin info
+        try {
+            adminInfo = JSON.parse(localStorage.getItem('adminInfo'));
+            // Extract company ID - handle both object and string formats
+            if (adminInfo && adminInfo.company) {
+                if (typeof adminInfo.company === 'object') {
+                    currentCompanyId = adminInfo.company.id || adminInfo.company._id;
+                } else {
+                    currentCompanyId = adminInfo.company;
+                }
+            }
+            console.log('Current Company ID:', currentCompanyId); // Debug log
+            console.log('Admin Info:', adminInfo); // Debug log
+            // Update navbar with admin email
+            updateAdminNavbar();
+        } catch (error) {
+            console.error('Error loading admin info:', error);
+        }
+
+        function updateAdminNavbar() {
+            const navbarNav = document.getElementById('adminNav');
+            if (navbarNav && adminInfo) {
+                // Remove any existing dynamic items (email and logout)
+                const existingItems = navbarNav.querySelectorAll('li:not(:first-child):not(:nth-child(2))');
+                existingItems.forEach(item => item.remove());
+
+                const emailLi = document.createElement('li');
+                emailLi.innerHTML = `<span class="nav-link">${adminInfo.email}</span>`;
+                navbarNav.appendChild(emailLi);
+
+                const logoutLi = document.createElement('li');
+                logoutLi.innerHTML = `<a href="#" onclick="adminLogout(); return false;" class="nav-link">Đăng xuất</a>`;
+                navbarNav.appendChild(logoutLi);
+            }
+        }
+
+        function adminLogout() {
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('adminInfo');
+            window.location.href = '/admin/login';
+        }
+
+        // Tab switching
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+
+            document.getElementById(`${tab}Tab`).classList.add('active');
+            document.getElementById(`${tab}Content`).style.display = 'block';
+
+            if (tab === 'companies') {
+                loadCompanies();
+            } else if (tab === 'admins') {
+                loadAdmins();
+            }
+        }
+
+        // Load statistics
+        async function loadStats() {
+            try {
+                console.log('Loading stats for company:', currentCompanyId); // Debug log
+                const response = await fetch(`${API_BASE_URL}/companies/${currentCompanyId}/stats`, {
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`
+                    }
+                });
+
+                const data = await response.json();
+                console.log('Stats response:', data); // Debug log
+
+                if (response.ok) {
+                    document.getElementById('companyName').textContent = `Công ty: ${data.company.name}`;
+                    document.getElementById('totalAdmins').textContent = data.stats.admins || 0;
+                    document.getElementById('totalUsers').textContent = data.stats.users || 0;
+                    document.getElementById('totalSurveys').textContent = data.stats.surveys || 0;
+                } else {
+                    console.error('Failed to load stats:', data);
+                    // Set default values if API fails
+                    document.getElementById('companyName').textContent = adminInfo?.company?.name ? `Công ty: ${adminInfo.company.name}` : '';
+                    document.getElementById('totalAdmins').textContent = '0';
+                    document.getElementById('totalUsers').textContent = '0';
+                    document.getElementById('totalSurveys').textContent = '0';
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                // Set default values on error
+                document.getElementById('companyName').textContent = adminInfo?.company?.name ? `Công ty: ${adminInfo.company.name}` : '';
+                document.getElementById('totalAdmins').textContent = '0';
+                document.getElementById('totalUsers').textContent = '0';
+                document.getElementById('totalSurveys').textContent = '0';
+            }
+        }
+
+        // Load companies
+        async function loadCompanies() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/companies`, {
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`
+                    }
+                });
+
+                const data = await response.json();
+                const container = document.getElementById('companiesContainer');
+
+                if (data.companies.length === 0) {
+                    container.innerHTML = '<p class="text-secondary text-center">Chưa có công ty nào</p>';
+                    return;
+                }
+
+                container.innerHTML = data.companies.map(company => `
+          <div class="card mb-2">
+            <div class="card-body">
+              <div class="flex-between">
+                <div>
+                  <h4 style="margin: 0;">${company.name}</h4>
+                  <small class="text-muted">Tạo: ${ui.formatDate(company.createdAt)}</small>
+                </div>
+                <div class="flex gap-sm">
+                  <button onclick="viewCompanyStats('${company._id}')" class="btn btn-sm btn-secondary">📊 Thống kê</button>
+                  <button onclick="deleteCompany('${company._id}')" class="btn btn-sm btn-danger">🗑️</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join('');
+            } catch (error) {
+                console.error('Error loading companies:', error);
+            }
+        }
+
+        // Load admins
+        async function loadAdmins() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/admins/company/${currentCompanyId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`
+                    }
+                });
+
+                const data = await response.json();
+                const container = document.getElementById('adminsContainer');
+
+                if (data.admins.length === 0) {
+                    container.innerHTML = '<p class="text-secondary text-center">Chưa có admin nào</p>';
+                    return;
+                }
+
+                container.innerHTML = data.admins.map(admin => `
+          <div class="card mb-2">
+            <div class="card-body">
+              <div class="flex-between">
+                <div>
+                  <h4 style="margin: 0;">${admin.email}</h4>
+                  <small class="text-muted">
+                    ${admin.phone || 'Chưa có SĐT'} • Tạo: ${ui.formatDate(admin.createdAt)}
+                  </small>
+                </div>
+                <div class="flex gap-sm">
+                  <button onclick="deleteAdmin('${admin._id}')" class="btn btn-sm btn-danger">🗑️</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join('');
+            } catch (error) {
+                console.error('Error loading admins:', error);
+            }
+        }
+
+        // Company modals
+        function showCreateCompanyModal() {
+            document.getElementById('createCompanyModal').classList.add('active');
+        }
+
+        function closeCreateCompanyModal() {
+            document.getElementById('createCompanyModal').classList.remove('active');
+            document.getElementById('newCompanyName').value = '';
+        }
+
+        async function createCompany() {
+            const name = document.getElementById('newCompanyName').value.trim();
+
+            if (!name) {
+                ui.showAlert('Vui lòng nhập tên công ty', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/companies`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify({ name })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error);
+                }
+
+                ui.showAlert('Tạo công ty thành công!', 'success');
+                closeCreateCompanyModal();
+                loadCompanies();
+            } catch (error) {
+                ui.showAlert(error.message, 'error');
+            }
+        }
+
+        async function deleteCompany(id) {
+            if (!confirm('Bạn có chắc chắn muốn xóa công ty này?')) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/companies/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    ui.showAlert('Xóa công ty thành công!', 'success');
+                    loadCompanies();
+                }
+            } catch (error) {
+                ui.showAlert('Lỗi khi xóa công ty', 'error');
+            }
+        }
+
+        async function viewCompanyStats(id) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/companies/${id}/stats`, {
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`
+                    }
+                });
+
+                const data = await response.json();
+                alert(`Thống kê ${data.company.name}:\n\nAdmins: ${data.stats.admins}\nUsers: ${data.stats.users}\nSurveys: ${data.stats.surveys}`);
+            } catch (error) {
+                ui.showAlert('Lỗi khi tải thống kê', 'error');
+            }
+        }
+
+        // Admin modals
+        function showCreateAdminModal() {
+            document.getElementById('createAdminModal').classList.add('active');
+        }
+
+        function closeCreateAdminModal() {
+            document.getElementById('createAdminModal').classList.remove('active');
+            document.getElementById('newAdminEmail').value = '';
+            document.getElementById('newAdminPassword').value = '';
+            document.getElementById('newAdminPhone').value = '';
+        }
+
+        async function createAdmin() {
+            const email = document.getElementById('newAdminEmail').value.trim();
+            const password = document.getElementById('newAdminPassword').value;
+            const phone = document.getElementById('newAdminPhone').value.trim();
+
+            if (!email || !password) {
+                ui.showAlert('Email và mật khẩu là bắt buộc', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/admins/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email,
+                        password,
+                        phone: phone || undefined,
+                        companyId: currentCompanyId
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error);
+                }
+
+                ui.showAlert('Thêm admin thành công!', 'success');
+                closeCreateAdminModal();
+                loadAdmins();
+                loadStats();
+            } catch (error) {
+                ui.showAlert(error.message, 'error');
+            }
+        }
+
+        async function deleteAdmin(id) {
+            if (!confirm('Bạn có chắc chắn muốn xóa admin này?')) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/admins/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    ui.showAlert('Xóa admin thành công!', 'success');
+                    loadAdmins();
+                    loadStats();
+                }
+            } catch (error) {
+                ui.showAlert('Lỗi khi xóa admin', 'error');
+            }
+        }
+
+        // Load initial data
+        loadStats();
+        loadCompanies();
+    </script>
+
+    <style>
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+    </style>
+</body>
+
+</html>

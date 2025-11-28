@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Quản lý khảo sát - SurveyPro AI">
+    <title>Dashboard - SurveyPro AI</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <!-- Admin Dashboard: Manage surveys created by this admin -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="/dashboard" class="navbar-brand">SurveyPro AI</a>
+            <ul class="navbar-nav">
+                <li><a href="/dashboard" class="nav-link">📋 Khảo sát</a></li>
+                <li><a href="/admin/dashboard" class="nav-link">🏢 Quản lý</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Dashboard Content -->
+    <div class="container" style="margin-top: 3rem; margin-bottom: 3rem;">
+        <!-- Header -->
+        <div class="flex-between mb-4">
+            <div>
+                <h1>Khảo sát của tôi</h1>
+                <p class="text-secondary">Quản lý và theo dõi các khảo sát của bạn</p>
+            </div>
+            <a href="/create-survey" class="btn btn-primary">
+                <span style="font-size: 1.25rem; margin-right: 0.5rem;">+</span>
+                Tạo khảo sát mới
+            </a>
+        </div>
+
+        <!-- Surveys Grid -->
+        <div id="surveysContainer">
+            <div class="flex-center" style="padding: 4rem 0;">
+                <div class="spinner"></div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" style="display: none; text-align: center; padding: 4rem 0;">
+            <div style="font-size: 5rem; margin-bottom: 1rem;">📋</div>
+            <h3>Chưa có khảo sát nào</h3>
+            <p class="text-secondary mb-3">Tạo khảo sát đầu tiên của bạn để bắt đầu thu thập dữ liệu</p>
+            <a href="/create-survey" class="btn btn-primary">Tạo khảo sát mới</a>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        // Protect page - require admin authentication
+        requireAdminAuth();
+        
+        // Update navbar with admin info
+        updateAdminNavbar();
+
+        // Load surveys created by this admin
+        async function loadSurveys() {
+            const container = document.getElementById('surveysContainer');
+            const emptyState = document.getElementById('emptyState');
+
+            try {
+                const data = await adminApi.get('/surveys');
+                const surveys = data.surveys;
+
+                if (surveys.length === 0) {
+                    container.style.display = 'none';
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                // Render surveys
+                container.innerHTML = `
+          <div class="grid grid-2">
+            ${surveys.map(survey => `
+              <div class="card fade-in">
+                <div class="card-header">
+                  <div class="flex-between">
+                    <h3 class="card-title">${survey.title}</h3>
+                    <span class="badge badge-${getStatusColor(survey.status)}">
+                      ${getStatusText(survey.status)}
+                    </span>
+                  </div>
+                  <p class="text-secondary" style="margin-top: 0.5rem;">
+                    ${survey.description || 'Không có mô tả'}
+                  </p>
+                </div>
+                <div class="card-body">
+                  <div style="display: flex; gap: 0.5rem; color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">
+                    <span>📅 ${ui.formatDate(survey.createdAt)}</span>
+                  </div>
+                  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <a href="/analytics/${survey._id}" class="btn btn-sm btn-primary">
+                      📊 Xem kết quả
+                    </a>
+                    <button onclick="editSurvey('${survey._id}')" class="btn btn-sm btn-secondary">
+                      ✏️ Chỉnh sửa
+                    </button>
+                    <button onclick="copySurveyLink('${survey._id}')" class="btn btn-sm btn-secondary">
+                      🔗 Sao chép link
+                    </button>
+                    <button onclick="deleteSurvey('${survey._id}')" class="btn btn-sm btn-danger">
+                      🗑️ Xóa
+                    </button>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+            } catch (error) {
+                container.innerHTML = `
+          <div class="alert alert-error">
+            Lỗi khi tải khảo sát: ${error.message}
+          </div>
+        `;
+            }
+        }
+
+        function getStatusColor(status) {
+            const colors = {
+                'draft': 'warning',
+                'active': 'success',
+                'closed': 'danger'
+            };
+            return colors[status] || 'primary';
+        }
+
+        function getStatusText(status) {
+            const texts = {
+                'draft': 'Nháp',
+                'active': 'Đang hoạt động',
+                'closed': 'Đã đóng'
+            };
+            return texts[status] || status;
+        }
+
+        function editSurvey(id) {
+            window.location.href = `/create-survey?id=${id}`;
+        }
+
+        function copySurveyLink(id) {
+            const link = `${window.location.origin}/survey/${id}`;
+            navigator.clipboard.writeText(link).then(() => {
+                ui.showAlert('Đã sao chép link khảo sát!', 'success');
+            }).catch(() => {
+                ui.showAlert('Không thể sao chép link', 'error');
+            });
+        }
+
+        async function deleteSurvey(id) {
+            if (!ui.confirm('Bạn có chắc chắn muốn xóa khảo sát này?')) {
+                return;
+            }
+
+            try {
+                await adminApi.delete(`/surveys/${id}`);
+                ui.showAlert('Đã xóa khảo sát thành công', 'success');
+                loadSurveys();
+            } catch (error) {
+                ui.showAlert('Lỗi khi xóa khảo sát: ' + error.message, 'error');
+            }
+        }
+
+        // Load surveys on page load
+        loadSurveys();
+    </script>
+</body>
+
+</html>

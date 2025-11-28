@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Register - SurveyPro AI</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="/" class="navbar-brand">SurveyPro AI - Admin</a>
+            <ul class="navbar-nav">
+                <li><a href="/admin/login">Admin Login</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container" style="max-width: 600px; margin-top: 3rem; margin-bottom: 3rem;">
+        <div class="card">
+            <div class="card-header">
+                <h2 style="text-align: center; margin: 0;">📝 Đăng ký Admin</h2>
+            </div>
+            <div class="card-body">
+                <form id="adminRegisterForm">
+                    <div class="form-group">
+                        <label for="companyId" class="form-label">Công ty *</label>
+                        <select id="companyId" class="form-control" required>
+                            <option value="">-- Chọn công ty --</option>
+                        </select>
+                        <small class="text-muted">Hoặc <a href="#" onclick="showCreateCompanyModal(); return false;">tạo
+                                công ty mới</a></small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email *</label>
+                        <input type="email" id="email" class="form-control" placeholder="admin@company.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password" class="form-label">Mật khẩu *</label>
+                        <input type="password" id="password" class="form-control" placeholder="Tối thiểu 6 ký tự"
+                            required minlength="6">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword" class="form-label">Xác nhận mật khẩu *</label>
+                        <input type="password" id="confirmPassword" class="form-control" placeholder="Nhập lại mật khẩu"
+                            required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone" class="form-label">Số điện thoại</label>
+                        <input type="tel" id="phone" class="form-control" placeholder="+84123456789">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
+                        Đăng ký
+                    </button>
+                </form>
+
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <p class="text-secondary">
+                        Đã có tài khoản?
+                        <a href="/admin/login" style="color: var(--primary);">Đăng nhập ngay</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Company Modal -->
+    <div id="createCompanyModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Tạo công ty mới</h3>
+                <button class="modal-close" onclick="closeCreateCompanyModal()">×</button>
+            </div>
+            <div>
+                <div class="form-group">
+                    <label class="form-label">Tên công ty *</label>
+                    <input type="text" id="companyName" class="form-control" placeholder="VD: Acme Corporation">
+                </div>
+                <div class="flex gap-sm mt-3">
+                    <button onclick="createCompany()" class="btn btn-primary">Tạo công ty</button>
+                    <button onclick="closeCreateCompanyModal()" class="btn btn-secondary">Hủy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        // Redirect if already logged in
+        const adminToken = localStorage.getItem('adminToken');
+        if (adminToken) {
+            window.location.href = '/dashboard';
+        }
+
+        // Load companies
+        async function loadCompanies() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/companies`);
+                const data = await response.json();
+
+                const select = document.getElementById('companyId');
+                select.innerHTML = '<option value="">-- Chọn công ty --</option>';
+
+                data.companies.forEach(company => {
+                    const option = document.createElement('option');
+                    option.value = company._id;
+                    option.textContent = company.name;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading companies:', error);
+            }
+        }
+
+        function showCreateCompanyModal() {
+            document.getElementById('createCompanyModal').classList.add('active');
+        }
+
+        function closeCreateCompanyModal() {
+            document.getElementById('createCompanyModal').classList.remove('active');
+            document.getElementById('companyName').value = '';
+        }
+
+        async function createCompany() {
+            const name = document.getElementById('companyName').value.trim();
+
+            if (!name) {
+                ui.showAlert('Vui lòng nhập tên công ty', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/companies`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Tạo công ty thất bại');
+                }
+
+                ui.showAlert('Tạo công ty thành công!', 'success');
+                closeCreateCompanyModal();
+
+                // Reload companies and select the new one
+                await loadCompanies();
+                document.getElementById('companyId').value = data.company._id;
+            } catch (error) {
+                ui.showAlert(error.message, 'error');
+            }
+        }
+
+        // Register form
+        document.getElementById('adminRegisterForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const companyId = document.getElementById('companyId').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const phone = document.getElementById('phone').value;
+
+            if (!companyId) {
+                ui.showAlert('Vui lòng chọn công ty', 'error');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                ui.showAlert('Mật khẩu xác nhận không khớp', 'error');
+                return;
+            }
+
+            try {
+                ui.showLoading();
+
+                const response = await fetch(`${API_BASE_URL}/admins/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        companyId,
+                        email,
+                        password,
+                        phone: phone || undefined
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Đăng ký thất bại');
+                }
+
+                // Save token and info
+                localStorage.setItem('adminToken', data.token);
+                localStorage.setItem('adminInfo', JSON.stringify(data.admin));
+
+                ui.showAlert('Đăng ký thành công!', 'success');
+
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 500);
+            } catch (error) {
+                ui.showAlert(error.message, 'error');
+            } finally {
+                ui.hideLoading();
+            }
+        });
+
+        // Load companies on page load
+        loadCompanies();
+    </script>
+</body>
+
+</html>

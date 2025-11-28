@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Tham gia khảo sát">
+    <title>Khảo sát - SurveyPro AI</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .survey-container {
+            max-width: 800px;
+            margin: 3rem auto;
+            padding: 0 1rem;
+        }
+
+        .question-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .question-number {
+            display: inline-block;
+            background: var(--gradient-primary);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 32px;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .table-question {
+            overflow-x: auto;
+        }
+
+        .table-question table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .table-question th,
+        .table-question td {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .table-question th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+        }
+
+        .table-question td:first-child {
+            text-align: left;
+            background: var(--bg-tertiary);
+            font-weight: 500;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient-primary);
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="/" class="navbar-brand">SurveyPro AI</a>
+        </div>
+    </nav>
+
+    <!-- Survey Container -->
+    <div class="survey-container">
+        <!-- Loading -->
+        <div id="loadingState" class="flex-center" style="padding: 4rem 0;">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Survey Content -->
+        <div id="surveyContent" style="display: none;">
+            <!-- Survey Header -->
+            <div class="card mb-4 fade-in">
+                <h1 id="surveyTitle"></h1>
+                <p id="surveyDescription" class="text-secondary"></p>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-bar" id="progressBar" style="display: none;">
+                <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+            </div>
+
+            <!-- Questions Form -->
+            <form id="surveyForm">
+                <div id="questionsContainer"></div>
+
+                <!-- Submit Button -->
+                <div class="flex gap-md mt-4">
+                    <button type="submit" class="btn btn-success btn-lg" style="flex: 1;">
+                        ✓ Gửi câu trả lời
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Success State -->
+        <div id="successState" style="display: none; text-align: center; padding: 4rem 0;">
+            <div style="font-size: 5rem; margin-bottom: 1rem;">✅</div>
+            <h2>Cảm ơn bạn đã tham gia!</h2>
+            <p class="text-secondary">Câu trả lời của bạn đã được ghi nhận.</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" style="display: none; text-align: center; padding: 4rem 0;">
+            <div style="font-size: 5rem; margin-bottom: 1rem;">❌</div>
+            <h2>Đã xảy ra lỗi</h2>
+            <p id="errorMessage" class="text-secondary"></p>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        let survey = null;
+        let answers = {};
+
+        // Get survey ID from URL
+        const surveyId = window.location.pathname.split('/').pop();
+
+        // Load survey
+        async function loadSurvey() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/surveys/public/${surveyId}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Không thể tải khảo sát');
+                }
+
+                console.log('Survey data loaded:', data); // Debug log
+
+                // Backend returns { survey: {...}, questions: [...] }
+                survey = data.survey;
+                survey.questions = data.questions || []; // Add questions to survey object
+                
+                console.log('Survey object:', survey); // Debug log
+                console.log('Questions count:', survey.questions.length); // Debug log
+                
+                // Debug: Check if questions have _id
+                if (survey.questions.length > 0) {
+                    console.log('First question:', survey.questions[0]);
+                    console.log('First question has _id:', !!survey.questions[0]._id);
+                }
+                
+                renderSurvey();
+            } catch (error) {
+                console.error('Error loading survey:', error); // Debug log
+                showError(error.message);
+            }
+        }
+
+        function renderSurvey() {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('surveyContent').style.display = 'block';
+
+            // Set survey info
+            document.getElementById('surveyTitle').textContent = survey.title || 'Khảo sát';
+            document.getElementById('surveyDescription').textContent = survey.description || '';
+
+            // Check if questions exist
+            if (!survey.questions || survey.questions.length === 0) {
+                document.getElementById('questionsContainer').innerHTML = 
+                    '<p class="text-center text-secondary">Khảo sát này chưa có câu hỏi.</p>';
+                return;
+            }
+
+            // Render questions
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = survey.questions.map((q, index) => {
+                return `
+          <div class="question-card fade-in" style="animation-delay: ${index * 0.1}s;">
+            <div style="margin-bottom: 1rem;">
+              <span class="question-number">${index + 1}</span>
+              <span style="font-size: 1.25rem; font-weight: 600;">
+                ${q.question}
+                ${q.required ? '<span style="color: var(--error);">*</span>' : ''}
+              </span>
+            </div>
+            ${renderQuestionInput(q, index)}
+          </div>
+        `;
+            }).join('');
+
+            // Show progress bar if enabled
+            if (survey.settings?.showProgressBar) {
+                document.getElementById('progressBar').style.display = 'block';
+                updateProgress();
+            }
+        }
+
+        function renderQuestionInput(question, index) {
+            const qId = question._id || `q_${index}`;
+
+            switch (question.type) {
+                case 'text':
+                    return `
+            <textarea 
+              id="${qId}" 
+              class="form-control" 
+              placeholder="Nhập câu trả lời của bạn..."
+              rows="3"
+              ${question.required ? 'required' : ''}
+              onchange="updateAnswer('${qId}', this.value)"
+            ></textarea>
+          `;
+
+                case 'radio':
+                    // Handle both 'options' (old) and 'answers' (new from backend)
+                    const radioOpts = question.options || question.answers || [];
+                    return radioOpts.map((opt, i) => `
+            <div class="form-check">
+              <input 
+                type="radio" 
+                id="${qId}_${i}" 
+                name="${qId}" 
+                value="${opt._id || opt.value}"
+                data-answer-id="${opt._id || ''}"
+                class="form-check-input"
+                ${question.required ? 'required' : ''}
+                onchange="updateRadioAnswer('${qId}', this)"
+              >
+              <label for="${qId}_${i}" class="form-check-label">${opt.label}</label>
+            </div>
+          `).join('');
+
+                case 'checkbox':
+                    // Handle both 'options' (old) and 'answers' (new from backend)
+                    const checkboxOpts = question.options || question.answers || [];
+                    return checkboxOpts.map((opt, i) => `
+            <div class="form-check">
+              <input 
+                type="checkbox" 
+                id="${qId}_${i}" 
+                name="${qId}" 
+                value="${opt._id || opt.value}"
+                data-answer-id="${opt._id || ''}"
+                class="form-check-input"
+                onchange="updateCheckboxAnswer('${qId}')"
+              >
+              <label for="${qId}_${i}" class="form-check-label">${opt.label}</label>
+            </div>
+          `).join('');
+
+                case 'date':
+                    return `
+            <input 
+              type="date" 
+              id="${qId}" 
+              class="form-control"
+              ${question.required ? 'required' : ''}
+              onchange="updateAnswer('${qId}', this.value)"
+            >
+          `;
+
+                case 'table-single':
+                case 'table-multiple':
+                    return renderTableQuestion(question, qId);
+
+                default:
+                    return '<p class="text-muted">Loại câu hỏi không được hỗ trợ</p>';
+            }
+        }
+
+        function renderTableQuestion(question, qId) {
+            // Validate tableConfig
+            if (!question.tableConfig || !question.tableConfig.rows || !question.tableConfig.columns) {
+                return '<p class="text-muted">Cấu hình bảng không hợp lệ</p>';
+            }
+
+            const inputType = question.type === 'table-single' ? 'radio' : 'checkbox';
+
+            return `
+        <div class="table-question">
+          <table>
+            <thead>
+              <tr>
+                <th></th>
+                ${question.tableConfig.columns.map(col => `<th>${col}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${question.tableConfig.rows.map((row, rowIndex) => `
+                <tr>
+                  <td>${row}</td>
+                  ${question.tableConfig.columns.map((col, colIndex) => `
+                    <td>
+                      <input 
+                        type="${inputType}" 
+                        name="${qId}_${rowIndex}" 
+                        value="${col}"
+                        onchange="updateTableAnswer('${qId}', '${row}', this)"
+                      >
+                    </td>
+                  `).join('')}
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+        }
+
+        function updateAnswer(questionId, value) {
+            answers[questionId] = value;
+            updateProgress();
+        }
+
+        function updateRadioAnswer(questionId, input) {
+            // Store answer ID (for backend) or value (fallback)
+            const answerId = input.getAttribute('data-answer-id');
+            answers[questionId] = answerId || input.value;
+            updateProgress();
+        }
+
+        function updateCheckboxAnswer(questionId) {
+            const checkboxes = document.querySelectorAll(`input[name="${questionId}"]:checked`);
+            // Store answer IDs (for backend) or values (fallback)
+            answers[questionId] = Array.from(checkboxes).map(cb => {
+                const answerId = cb.getAttribute('data-answer-id');
+                return answerId || cb.value;
+            });
+            updateProgress();
+        }
+
+        function updateTableAnswer(questionId, row, input) {
+            if (!answers[questionId]) {
+                answers[questionId] = {};
+            }
+
+            if (input.type === 'checkbox') {
+                const checkboxes = document.querySelectorAll(`input[name="${input.name}"]:checked`);
+                answers[questionId][row] = Array.from(checkboxes).map(cb => cb.value);
+            } else {
+                answers[questionId][row] = input.value;
+            }
+
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const totalQuestions = survey.questions.length;
+            const answeredQuestions = Object.keys(answers).length;
+            const progress = (answeredQuestions / totalQuestions) * 100;
+
+            const progressFill = document.getElementById('progressFill');
+            if (progressFill) {
+                progressFill.style.width = `${progress}%`;
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('surveyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Đang gửi...';
+
+            // Check if survey has questions
+            if (!survey || !survey.questions || survey.questions.length === 0) {
+                ui.showAlert('Khảo sát không có câu hỏi', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '✓ Gửi câu trả lời';
+                return;
+            }
+
+            // Validate all questions have _id
+            const invalidQuestions = survey.questions.filter(q => !q._id);
+            if (invalidQuestions.length > 0) {
+                console.error('Questions without _id:', invalidQuestions);
+                ui.showAlert('Dữ liệu khảo sát không hợp lệ (thiếu question ID). Vui lòng liên hệ admin.', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '✓ Gửi câu trả lời';
+                return;
+            }
+
+            // Prepare answers
+            const formattedAnswers = survey.questions
+                .map((q, index) => {
+                    const qId = q._id;
+                    const answer = answers[qId] || null;
+                    
+                    const formatted = {
+                        question: q._id
+                    };
+                    
+                    // Format based on question type
+                    if (q.type === 'text' || q.type === 'date') {
+                        formatted.textAnswer = answer || '';
+                    } else if (q.type === 'radio') {
+                        // answer is already the answer ID
+                        formatted.selectedAnswer = answer || null;
+                    } else if (q.type === 'checkbox') {
+                        // answer is already array of answer IDs
+                        formatted.selectedAnswers = Array.isArray(answer) ? answer : [];
+                    } else if (q.type === 'table-single' || q.type === 'table-multiple') {
+                        formatted.tableAnswers = answer || {};
+                    }
+                    
+                    return formatted;
+                });
+
+            console.log('Formatted answers to submit:', formattedAnswers); // Debug log
+
+            try {
+                // Submit response to public endpoint (no auth required)
+                const response = await fetch(`${API_BASE_URL}/responses/survey/${survey._id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        answers: formattedAnswers,
+                        respondent: {}
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || 'Gửi câu trả lời thất bại');
+                }
+
+                // Show success
+                document.getElementById('surveyContent').style.display = 'none';
+                document.getElementById('successState').style.display = 'block';
+            } catch (error) {
+                ui.showAlert('Lỗi khi gửi câu trả lời: ' + error.message, 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '✓ Gửi câu trả lời';
+            }
+        });
+
+        function showError(message) {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('errorState').style.display = 'block';
+            document.getElementById('errorMessage').textContent = message;
+        }
+
+        // Load survey on page load
+        loadSurvey();
+    </script>
+</body>
+
+</html>

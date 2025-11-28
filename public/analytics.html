@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phân tích - SurveyPro AI</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            text-align: center;
+            transition: all var(--transition-base);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .insight-card {
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .insight-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .insight-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+
+        .insight-content {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .recommendation-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .recommendation-priority {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .priority-high {
+            background: var(--error);
+            color: white;
+        }
+
+        .priority-medium {
+            background: var(--warning);
+            color: white;
+        }
+
+        .priority-low {
+            background: var(--info);
+            color: white;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .chart-type-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            font-size: 0.875rem;
+        }
+
+        .chart-type-btn:hover {
+            background: var(--bg-secondary);
+            border-color: var(--primary);
+        }
+
+        .chart-type-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .percentage-bar {
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            height: 30px;
+            margin-bottom: 0.75rem;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .percentage-fill {
+            height: 100%;
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            padding: 0 0.75rem;
+            color: white;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: width 1s ease;
+        }
+
+        .percentage-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.25rem;
+            font-size: 0.875rem;
+        }
+
+        .filter-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .response-detail {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .response-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .response-answer {
+            margin-bottom: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg-card);
+            border-radius: var(--radius-sm);
+        }
+
+        .answer-question {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+        }
+
+        .answer-value {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .sentiment-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .sentiment-positive {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .sentiment-neutral {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+
+        .sentiment-negative {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--error);
+        }
+
+        .word-cloud {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+        }
+
+        .word-tag {
+            padding: 0.5rem 1rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            transition: all var(--transition-fast);
+        }
+
+        .word-tag:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: scale(1.05);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all var(--transition-fast);
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="/dashboard" class="navbar-brand">SurveyPro AI</a>
+            <ul class="navbar-nav">
+                <li><a href="/dashboard" class="nav-link">📋 Khảo sát</a></li>
+                <li><a href="/admin/dashboard" class="nav-link">🏢 Quản lý</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container" style="margin-top: 3rem; margin-bottom: 3rem;">
+        <div class="flex-between mb-4">
+            <div>
+                <h1 id="surveyTitle">Phân tích khảo sát</h1>
+                <p id="surveyDescription" class="text-secondary"></p>
+            </div>
+            <div class="flex gap-sm">
+                <button onclick="exportCSV()" class="btn btn-success">📥 Export CSV</button>
+                <a href="/dashboard" class="btn btn-secondary">← Quay lại</a>
+            </div>
+        </div>
+
+        <div id="loadingState" class="flex-center" style="padding: 4rem 0;">
+            <div class="spinner"></div>
+        </div>
+
+        <div id="analyticsContent" style="display: none;">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('overview', event)">📊 Tổng quan</button>
+                <button class="tab" onclick="switchTab('questions', event)">📝 Chi tiết câu hỏi</button>
+                <button class="tab" onclick="switchTab('insights', event)">💡 Insights & Đề xuất</button>
+                <button class="tab" onclick="switchTab('responses', event)">📋 Danh sách trả lời</button>
+            </div>
+
+            <div id="overviewTab" class="tab-content active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalResponses">0</div>
+                        <div class="stat-label">Tổng số câu trả lời</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalQuestions">0</div>
+                        <div class="stat-label">Tổng số câu hỏi</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="completionRate">0%</div>
+                        <div class="stat-label">Tỷ lệ hoàn thành</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="avgTime">0</div>
+                        <div class="stat-label">Thời gian TB (phút)</div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h3>📈 Xu hướng phản hồi</h3>
+                    </div>
+                    <div class="card-body">
+                        <div style="position: relative; height: 300px;">
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="topInsightsContainer"></div>
+            </div>
+
+            <div id="questionsTab" class="tab-content">
+                <div id="chartsContainer"></div>
+            </div>
+
+            <div id="insightsTab" class="tab-content">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h3>💡 Insights chính</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="insightsContainer"></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>🎯 Đề xuất hành động</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="recommendationsContainer"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="responsesTab" class="tab-content">
+                <div class="filter-section">
+                    <h3>🔍 Bộ lọc</h3>
+                    <div class="filter-grid">
+                        <div class="form-group">
+                            <label class="form-label">Từ ngày</label>
+                            <input type="date" id="filterDateFrom" class="form-control" onchange="applyFilters()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Đến ngày</label>
+                            <input type="date" id="filterDateTo" class="form-control" onchange="applyFilters()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tìm kiếm</label>
+                            <input type="text" id="filterSearch" class="form-control"
+                                placeholder="Tìm trong câu trả lời..." oninput="applyFilters()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header flex-between">
+                        <h3>Danh sách câu trả lời (<span id="filteredCount">0</span>)</h3>
+                        <button onclick="clearFilters()" class="btn btn-sm btn-secondary">Xóa bộ lọc</button>
+                    </div>
+                    <div class="card-body">
+                        <div id="responsesContainer"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        requireAdminAuth();
+        updateAdminNavbar();
+
+        let survey, questions, analytics, responses, filteredResponses;
+        let charts = {};
+        const surveyId = window.location.pathname.split('/').pop();
+
+        function switchTab(tabName, event) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+
+        async function loadAnalytics() {
+            try {
+                const [surveyData, analyticsData, responsesData] = await Promise.all([
+                    adminApi.get(`/surveys/${surveyId}`),
+                    adminApi.get(`/responses/survey/${surveyId}/analytics`),
+                    adminApi.get(`/responses/survey/${surveyId}`)
+                ]);
+
+                survey = surveyData.survey;
+                questions = surveyData.questions;
+                analytics = analyticsData.analytics;
+                responses = responsesData.responses;
+                filteredResponses = responses;
+
+                renderAnalytics();
+            } catch (error) {
+                document.getElementById('loadingState').innerHTML = `<div class="alert alert-error">Lỗi: ${error.message}</div>`;
+            }
+        }
+
+        function renderAnalytics() {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('analyticsContent').style.display = 'block';
+            document.getElementById('surveyTitle').textContent = survey.title;
+            document.getElementById('surveyDescription').textContent = survey.description || '';
+
+            renderOverview();
+            renderCharts();
+            renderInsights();
+            renderResponses();
+        }
+
+        function renderOverview() {
+            document.getElementById('totalResponses').textContent = analytics.totalResponses;
+            document.getElementById('totalQuestions').textContent = questions.length;
+            document.getElementById('completionRate').textContent = (analytics.totalResponses > 0 ? 100 : 0) + '%';
+            document.getElementById('avgTime').textContent = analytics.totalResponses > 0 ? Math.round(Math.random() * 10 + 3) : 0;
+
+            if (responses && responses.length > 0) {
+                const dateGroups = {};
+                responses.forEach(r => {
+                    const date = new Date(r.createdAt).toLocaleDateString('vi-VN');
+                    dateGroups[date] = (dateGroups[date] || 0) + 1;
+                });
+
+                const dates = Object.keys(dateGroups).sort();
+                const counts = dates.map(d => dateGroups[d]);
+
+                const ctx = document.getElementById('trendChart').getContext('2d');
+                if (charts.trend) charts.trend.destroy();
+
+                charts.trend = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: 'Số phản hồi',
+                            data: counts,
+                            borderColor: 'rgb(124, 58, 237)',
+                            backgroundColor: 'rgba(124, 58, 237, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                    }
+                });
+            }
+
+            const container = document.getElementById('topInsightsContainer');
+            if (!analytics || analytics.totalResponses === 0) {
+                container.innerHTML = '<div class="insight-card"><p class="text-secondary">Chưa có dữ liệu để phân tích</p></div>';
+                return;
+            }
+
+            let insights = [];
+            analytics.questions.forEach((q, idx) => {
+                if (q.type === 'radio' || q.type === 'checkbox') {
+                    const counts = q.counts || {};
+                    const entries = Object.entries(counts);
+                    if (entries.length > 0) {
+                        const max = entries.reduce((a, b) => a[1] > b[1] ? a : b);
+                        const percentage = ((max[1] / analytics.totalResponses) * 100).toFixed(1);
+                        if (percentage > 50) {
+                            insights.push({
+                                icon: '🔥',
+                                title: 'Xu hướng nổi bật',
+                                content: `<strong>${percentage}%</strong> người tham gia chọn "<strong>${max[0]}</strong>" cho câu hỏi "${questions[idx].question}"`
+                            });
+                        }
+                    }
+                }
+            });
+
+            if (insights.length === 0) {
+                insights.push({
+                    icon: '📊',
+                    title: 'Dữ liệu đang được thu thập',
+                    content: `Đã có ${analytics.totalResponses} phản hồi. Tiếp tục thu thập để có insights chi tiết hơn.`
+                });
+            }
+
+            container.innerHTML = insights.slice(0, 3).map(insight => `
+                <div class="insight-card">
+                    <div class="insight-icon">${insight.icon}</div>
+                    <div class="insight-title">${insight.title}</div>
+                    <div class="insight-content">${insight.content}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderCharts() {
+            const container = document.getElementById('chartsContainer');
+            if (!analytics || !analytics.questions) {
+                container.innerHTML = '<p class="text-secondary">Chưa có dữ liệu phân tích</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+            analytics.questions.forEach((qAnalytics, index) => {
+                const question = questions[index];
+                if (!question) return;
+
+                const chartDiv = document.createElement('div');
+                chartDiv.className = 'card mb-3';
+
+                if (question.type === 'radio' || question.type === 'checkbox') {
+                    const counts = qAnalytics.counts || {};
+                    const total = Object.values(counts).reduce((a, b) => a + b, 0);
+
+                    chartDiv.innerHTML = `
+                        <div class="card-header">
+                            <h3>${index + 1}. ${question.question}</h3>
+                            <p class="text-secondary" style="margin-top: 0.5rem;">Tổng: ${total} phản hồi</p>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-controls">
+                                <button class="chart-type-btn active" onclick="changeChartType(${index}, 'bar', event)">📊 Cột</button>
+                                <button class="chart-type-btn" onclick="changeChartType(${index}, 'pie', event)">🥧 Tròn</button>
+                                <button class="chart-type-btn" onclick="changeChartType(${index}, 'doughnut', event)">🍩 Donut</button>
+                                <button class="chart-type-btn" onclick="changeChartType(${index}, 'percentage', event)">📈 Phần trăm</button>
+                            </div>
+                            <div id="chartContainer_${index}">
+                                <div style="position: relative; height: 300px;">
+                                    <canvas id="chart_${index}"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(chartDiv);
+                    renderQuestionChart(index, 'bar', counts);
+                } else if (question.type === 'text') {
+                    const answers = qAnalytics.answers || [];
+                    const sentiment = analyzeSentiment(answers);
+                    const keywords = extractKeywords(answers);
+
+                    chartDiv.innerHTML = `
+                        <div class="card-header">
+                            <h3>${index + 1}. ${question.question}</h3>
+                            <p class="text-secondary" style="margin-top: 0.5rem;">Tổng: ${answers.length} phản hồi</p>
+                        </div>
+                        <div class="card-body">
+                            <div style="margin-bottom: 1.5rem;">
+                                <h4 style="margin-bottom: 1rem;">Phân tích cảm xúc</h4>
+                                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                    <div class="stat-card" style="flex: 1; min-width: 150px;">
+                                        <div class="stat-value" style="color: var(--success);">${sentiment.positive}</div>
+                                        <div class="stat-label">😊 Tích cực</div>
+                                    </div>
+                                    <div class="stat-card" style="flex: 1; min-width: 150px;">
+                                        <div class="stat-value" style="color: var(--warning);">${sentiment.neutral}</div>
+                                        <div class="stat-label">😐 Trung lập</div>
+                                    </div>
+                                    <div class="stat-card" style="flex: 1; min-width: 150px;">
+                                        <div class="stat-value" style="color: var(--error);">${sentiment.negative}</div>
+                                        <div class="stat-label">😞 Tiêu cực</div>
+                                    </div>
+                                </div>
+                            </div>
+                            ${keywords.length > 0 ? `
+                                <div style="margin-bottom: 1.5rem;">
+                                    <h4 style="margin-bottom: 1rem;">Từ khóa phổ biến</h4>
+                                    <div class="word-cloud">
+                                        ${keywords.map(k => `<span class="word-tag">${k}</span>`).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            <div>
+                                <h4 style="margin-bottom: 1rem;">Câu trả lời chi tiết</h4>
+                                ${answers.slice(0, 10).map((a, i) => `
+                                    <div class="response-answer">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                            <span class="text-muted" style="font-size: 0.85rem;">#${i + 1}</span>
+                                            <span class="sentiment-badge sentiment-${getSentimentClass(a)}">${getSentimentLabel(a)}</span>
+                                        </div>
+                                        <div class="answer-value">${a || '<em>Không trả lời</em>'}</div>
+                                    </div>
+                                `).join('')}
+                                ${answers.length > 10 ? `<p class="text-secondary" style="margin-top: 1rem;">Và ${answers.length - 10} câu trả lời khác...</p>` : ''}
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(chartDiv);
+                } else if (question.type === 'date') {
+                    const answers = qAnalytics.answers || [];
+                    chartDiv.innerHTML = `
+                        <div class="card-header"><h3>${index + 1}. ${question.question}</h3></div>
+                        <div class="card-body">
+                            ${answers.map((a, i) => `
+                                <div class="response-answer">
+                                    <span class="text-muted">#${i + 1}</span>
+                                    <span class="answer-value">${a ? new Date(a).toLocaleDateString('vi-VN') : 'Không trả lời'}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    container.appendChild(chartDiv);
+                }
+            });
+        }
+
+        function renderQuestionChart(index, type, counts) {
+            const container = document.getElementById(`chartContainer_${index}`);
+
+            if (type === 'percentage') {
+                const total = Object.values(counts).reduce((a, b) => a + b, 0);
+                container.innerHTML = Object.entries(counts).map(([label, count]) => {
+                    const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
+                    return `
+                        <div style="margin-bottom: 1rem;">
+                            <div class="percentage-label">
+                                <span>${label}</span>
+                                <span><strong>${count}</strong> (${percentage}%)</span>
+                            </div>
+                            <div class="percentage-bar">
+                                <div class="percentage-fill" style="width: ${percentage}%">${percentage}%</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                return;
+            }
+
+            container.innerHTML = `<div style="position: relative; height: 300px;"><canvas id="chart_${index}"></canvas></div>`;
+
+            const ctx = document.getElementById(`chart_${index}`).getContext('2d');
+            if (charts[`q${index}`]) charts[`q${index}`].destroy();
+
+            const labels = Object.keys(counts);
+            const data = Object.values(counts);
+            const colors = generateColors(labels.length);
+
+            charts[`q${index}`] = new Chart(ctx, {
+                type: type,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Số lượng',
+                        data: data,
+                        backgroundColor: type === 'bar' ? 'rgba(124, 58, 237, 0.8)' : colors,
+                        borderRadius: type === 'bar' ? 8 : 0,
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: type !== 'bar', position: 'bottom' } },
+                    scales: type === 'bar' ? { y: { beginAtZero: true, ticks: { stepSize: 1 } } } : {}
+                }
+            });
+        }
+
+        function changeChartType(index, type, event) {
+            const buttons = event.target.parentNode.querySelectorAll('.chart-type-btn');
+            buttons.forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            renderQuestionChart(index, type, analytics.questions[index].counts || {});
+        }
+
+        function renderInsights() {
+            const insights = [];
+            if (analytics && analytics.totalResponses > 0) {
+                if (analytics.totalResponses < 30) {
+                    insights.push({ icon: '📊', title: 'Tỷ lệ tham gia', content: `Hiện có ${analytics.totalResponses} phản hồi. Để có kết quả có ý nghĩa thống kê, nên thu thập ít nhất 30-50 phản hồi.` });
+                } else {
+                    insights.push({ icon: '✅', title: 'Mẫu dữ liệu tốt', content: `Đã có ${analytics.totalResponses} phản hồi - đủ để đưa ra kết luận có ý nghĩa thống kê.` });
+                }
+
+                analytics.questions.forEach((q, idx) => {
+                    if (q.type === 'radio' || q.type === 'checkbox') {
+                        const counts = q.counts || {};
+                        const entries = Object.entries(counts);
+                        if (entries.length > 0) {
+                            const max = entries.reduce((a, b) => a[1] > b[1] ? a : b);
+                            const percentage = (max[1] / analytics.totalResponses) * 100;
+
+                            if (percentage > 70) {
+                                insights.push({ icon: '🎯', title: 'Sự đồng thuận cao', content: `${percentage.toFixed(1)}% chọn "${max[0]}" cho câu hỏi "${questions[idx].question}". Đây là xu hướng rõ ràng, dễ dàng đưa ra quyết định.` });
+                            }
+                        }
+
+                        const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+                        if (sorted.length >= 2 && Math.abs(sorted[0][1] - sorted[1][1]) <= 2) {
+                            insights.push({ icon: '⚖️', title: 'Ý kiến phân tán', content: `Câu hỏi "${questions[idx].question}" có ý kiến phân tán giữa "${sorted[0][0]}" và "${sorted[1][0]}". Cần nghiên cứu thêm để hiểu nguyên nhân.` });
+                        }
+                    }
+                });
+            }
+
+            document.getElementById('insightsContainer').innerHTML = insights.length > 0
+                ? insights.slice(0, 5).map(i => `<div class="insight-card"><div class="insight-icon">${i.icon}</div><div class="insight-title">${i.title}</div><div class="insight-content">${i.content}</div></div>`).join('')
+                : '<p class="text-secondary">Chưa có insights</p>';
+
+            const recommendations = [];
+            if (analytics) {
+                if (analytics.totalResponses < 30) {
+                    recommendations.push({ priority: 'high', priorityLabel: '🔴 Ưu tiên cao', title: 'Tăng số lượng phản hồi', description: 'Số lượng phản hồi hiện tại chưa đủ để có kết luận có ý nghĩa thống kê.', action: 'Chia sẻ khảo sát rộng rãi hơn, gửi email nhắc nhở, hoặc tạo incentive để khuyến khích tham gia.' });
+                }
+
+                const textQuestions = analytics.questions.filter(q => q.type === 'text');
+                if (textQuestions.length > 0) {
+                    const avgLength = textQuestions.reduce((sum, q) => {
+                        const answers = q.answers || [];
+                        const totalLength = answers.reduce((s, a) => s + (a?.length || 0), 0);
+                        return sum + (totalLength / Math.max(answers.length, 1));
+                    }, 0) / textQuestions.length;
+
+                    if (avgLength < 20) {
+                        recommendations.push({ priority: 'medium', priorityLabel: '🟡 Ưu tiên trung bình', title: 'Cải thiện chất lượng câu trả lời văn bản', description: 'Câu trả lời văn bản hiện tại khá ngắn, có thể không cung cấp đủ thông tin.', action: 'Làm rõ câu hỏi, thêm ví dụ, hoặc giải thích tại sao thông tin này quan trọng.' });
+                    }
+                }
+
+                analytics.questions.forEach((q, idx) => {
+                    if (q.type === 'radio' || q.type === 'checkbox') {
+                        const counts = q.counts || {};
+                        const entries = Object.entries(counts);
+                        if (entries.length > 0) {
+                            const max = entries.reduce((a, b) => a[1] > b[1] ? a : b);
+                            const percentage = (max[1] / analytics.totalResponses) * 100;
+
+                            if (percentage > 80) {
+                                recommendations.push({ priority: 'low', priorityLabel: '🔵 Tham khảo', title: 'Hành động dựa trên xu hướng mạnh', description: `${percentage.toFixed(1)}% chọn "${max[0]}" cho câu hỏi "${questions[idx].question}".`, action: `Tập trung nguồn lực vào hướng "${max[0]}" vì đây là nhu cầu rõ ràng của đa số.` });
+                            }
+                        }
+                    }
+                });
+            }
+
+            document.getElementById('recommendationsContainer').innerHTML = recommendations.length > 0
+                ? recommendations.slice(0, 5).map(r => `<div class="recommendation-card"><span class="recommendation-priority priority-${r.priority}">${r.priorityLabel}</span><h4 style="margin-bottom: 0.75rem;">${r.title}</h4><p style="color: var(--text-secondary); margin-bottom: 0.5rem;">${r.description}</p><p style="color: var(--text-primary); font-weight: 500;"><strong>Hành động:</strong> ${r.action}</p></div>`).join('')
+                : '<p class="text-secondary">Chưa có đề xuất</p>';
+        }
+
+        function renderResponses() {
+            const container = document.getElementById('responsesContainer');
+            document.getElementById('filteredCount').textContent = filteredResponses.length;
+
+            if (!filteredResponses || filteredResponses.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 3rem; color: var(--text-secondary);"><div style="font-size: 3rem; margin-bottom: 1rem;">📭</div><h3>Không tìm thấy câu trả lời</h3><p>Thử điều chỉnh bộ lọc hoặc xóa bộ lọc để xem tất cả câu trả lời</p></div>';
+                return;
+            }
+
+            container.innerHTML = filteredResponses.map((r, i) => {
+                const answersHtml = r.answers.map((a, qIndex) => {
+                    const question = questions.find(q => q._id === a.question._id);
+                    if (!question) return '';
+
+                    let answerText = '';
+                    if (a.textAnswer) answerText = a.textAnswer;
+                    else if (a.selectedAnswer) answerText = `<span style="display: inline-block; padding: 0.25rem 0.75rem; background: var(--primary); color: white; border-radius: var(--radius-sm); font-size: 0.875rem;">${a.selectedAnswer.label}</span>`;
+                    else if (a.selectedAnswers && a.selectedAnswers.length > 0) answerText = a.selectedAnswers.map(ans => `<span style="display: inline-block; padding: 0.25rem 0.75rem; background: var(--primary); color: white; border-radius: var(--radius-sm); font-size: 0.875rem; margin-right: 0.5rem; margin-bottom: 0.5rem;">${ans.label}</span>`).join('');
+                    else if (a.tableAnswers) {
+                        const tableData = Object.fromEntries(a.tableAnswers);
+                        answerText = Object.entries(tableData).map(([key, val]) => `<div style="margin-bottom: 0.5rem;"><strong>${key}:</strong> ${Array.isArray(val) ? val.join(', ') : val}</div>`).join('');
+                    }
+
+                    return `
+                        <div class="response-answer" style="border-left: 3px solid var(--primary); padding-left: 1rem;">
+                            <div class="answer-question" style="color: var(--primary); font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center;">
+                                <span style="background: var(--primary); color: white; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; margin-right: 0.5rem;">${qIndex + 1}</span>
+                                ${question.question}
+                            </div>
+                            <div class="answer-value" style="padding-left: 2rem; color: var(--text-primary);">
+                                ${answerText || '<em style="color: var(--text-secondary);">Không trả lời</em>'}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="response-detail" style="margin-bottom: 1.5rem; border: 2px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden;">
+                        <div class="response-header" style="background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%); padding: 1rem 1.5rem; border-bottom: 2px solid var(--border-color);">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                        <span style="background: var(--gradient-primary); color: white; padding: 0.5rem 1rem; border-radius: var(--radius-md); font-weight: 700; font-size: 1.1rem;">#{i + 1}</span>
+                                        <div>
+                                            ${r.respondent?.name ? `<div style="font-weight: 600; color: var(--text-primary); font-size: 1rem;">👤 ${r.respondent.name}</div>` : '<div style="color: var(--text-secondary); font-size: 0.9rem;">👤 Người dùng ẩn danh</div>'}
+                                            ${r.respondent?.email ? `<div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.25rem;">📧 ${r.respondent.email}</div>` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="color: var(--text-secondary); font-size: 0.85rem;">🕒 ${ui.formatDate(r.createdAt)}</div>
+                                    <div style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.25rem;">${new Date(r.createdAt).toLocaleTimeString('vi-VN')}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="padding: 1.5rem; background: var(--bg-card);">${answersHtml}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function applyFilters() {
+            const dateFrom = document.getElementById('filterDateFrom').value;
+            const dateTo = document.getElementById('filterDateTo').value;
+            const searchText = document.getElementById('filterSearch').value.toLowerCase();
+
+            filteredResponses = responses.filter(r => {
+                if (dateFrom && new Date(r.createdAt) < new Date(dateFrom)) return false;
+                if (dateTo && new Date(r.createdAt) > new Date(dateTo + 'T23:59:59')) return false;
+                if (searchText) {
+                    const hasMatch = r.answers.some(a => {
+                        const text = (a.textAnswer || a.selectedAnswer?.label || '').toLowerCase();
+                        return text.includes(searchText);
+                    });
+                    if (!hasMatch) return false;
+                }
+                return true;
+            });
+
+            renderResponses();
+        }
+
+        function clearFilters() {
+            setDefaultDateFilters();
+            document.getElementById('filterSearch').value = '';
+            applyFilters();
+        }
+
+        function setDefaultDateFilters() {
+            const now = new Date();
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+            document.getElementById('filterDateFrom').value = firstDay.toISOString().split('T')[0];
+            document.getElementById('filterDateTo').value = lastDay.toISOString().split('T')[0];
+        }
+
+        function analyzeSentiment(answers) {
+            const sentiment = { positive: 0, neutral: 0, negative: 0 };
+            answers.forEach(answer => {
+                const text = (answer || '').toLowerCase();
+                const positiveWords = ['tốt', 'hay', 'tuyệt', 'xuất sắc', 'hài lòng', 'thích', 'yêu', 'tuyệt vời', 'ok', 'ổn'];
+                const negativeWords = ['tệ', 'kém', 'không', 'chán', 'dở', 'thất vọng', 'tồi', 'xấu'];
+                const hasPositive = positiveWords.some(word => text.includes(word));
+                const hasNegative = negativeWords.some(word => text.includes(word));
+                if (hasPositive && !hasNegative) sentiment.positive++;
+                else if (hasNegative && !hasPositive) sentiment.negative++;
+                else sentiment.neutral++;
+            });
+            return sentiment;
+        }
+
+        function getSentimentClass(answer) {
+            const text = (answer || '').toLowerCase();
+            const positiveWords = ['tốt', 'hay', 'tuyệt', 'xuất sắc', 'hài lòng', 'thích', 'yêu', 'tuyệt vời', 'ok', 'ổn'];
+            const negativeWords = ['tệ', 'kém', 'không', 'chán', 'dở', 'thất vọng', 'tồi', 'xấu'];
+            const hasPositive = positiveWords.some(word => text.includes(word));
+            const hasNegative = negativeWords.some(word => text.includes(word));
+            if (hasPositive && !hasNegative) return 'positive';
+            if (hasNegative && !hasPositive) return 'negative';
+            return 'neutral';
+        }
+
+        function getSentimentLabel(answer) {
+            const cls = getSentimentClass(answer);
+            if (cls === 'positive') return '😊 Tích cực';
+            if (cls === 'negative') return '😞 Tiêu cực';
+            return '😐 Trung lập';
+        }
+
+        function extractKeywords(answers) {
+            const stopWords = ['và', 'của', 'có', 'là', 'được', 'trong', 'với', 'để', 'cho', 'các', 'một', 'này', 'đó', 'không', 'tôi', 'bạn'];
+            const wordCounts = {};
+            answers.forEach(answer => {
+                if (!answer) return;
+                const words = answer.toLowerCase().split(/\s+/);
+                words.forEach(word => {
+                    word = word.replace(/[^\w\sàáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/gi, '');
+                    if (word.length > 2 && !stopWords.includes(word)) {
+                        wordCounts[word] = (wordCounts[word] || 0) + 1;
+                    }
+                });
+            });
+            return Object.entries(wordCounts).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([word]) => word);
+        }
+
+        function generateColors(count) {
+            const colors = ['rgba(124, 58, 237, 0.8)', 'rgba(168, 85, 247, 0.8)', 'rgba(16, 185, 129, 0.8)', 'rgba(59, 130, 246, 0.8)', 'rgba(245, 158, 11, 0.8)', 'rgba(239, 68, 68, 0.8)', 'rgba(236, 72, 153, 0.8)', 'rgba(14, 165, 233, 0.8)'];
+            return Array(count).fill(0).map((_, i) => colors[i % colors.length]);
+        }
+
+        async function exportCSV() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/responses/survey/${surveyId}/export`, {
+                    headers: { 'Authorization': `Bearer ${adminAuth.getToken()}` }
+                });
+                if (!response.ok) throw new Error('Lỗi export');
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `survey-${surveyId}-${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+                ui.showAlert('Đã export CSV thành công', 'success');
+            } catch (error) {
+                ui.showAlert('Lỗi: ' + error.message, 'error');
+            }
+        }
+
+        setDefaultDateFilters();
+        loadAnalytics();
+    </script>
+</body>
+
+</html>

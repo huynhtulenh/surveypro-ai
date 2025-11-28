@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SurveyPro AI - Công cụ thu thập và phân tích dữ liệu khảo sát thông minh">
+  <title>SurveyPro AI - Thu thập & Phân tích Dữ liệu Khảo sát</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container navbar-container">
+      <a href="/" class="navbar-brand">SurveyPro AI</a>
+      <ul class="navbar-nav">
+        <li><a href="/admin/login" class="nav-link">Admin Login</a></li>
+        <li><a href="/admin/register" class="btn btn-sm btn-primary">Admin Register</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section style="padding: 6rem 0; text-align: center;">
+    <div class="container">
+      <h1 class="fade-in" style="font-size: 4rem; margin-bottom: 1.5rem;">
+        Thu thập & Phân tích<br>Dữ liệu Khảo sát
+      </h1>
+      <p class="fade-in" style="font-size: 1.5rem; color: var(--text-secondary); max-width: 700px; margin: 0 auto 2rem;">
+        Công cụ khảo sát thông minh với AI, giúp bạn thu thập, lọc và phân tích dữ liệu một cách hiệu quả
+      </p>
+      <div class="fade-in" style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        <a href="/admin/register" class="btn btn-primary btn-lg">Đăng ký Admin</a>
+        <a href="/admin/login" class="btn btn-outline btn-lg">Đăng nhập Admin</a>
+      </div>
+      
+      <!-- Info box for flow explanation -->
+      <div class="card" style="max-width: 800px; margin: 3rem auto; text-align: left;">
+        <div class="card-header">
+          <h3>🏗️ Cấu trúc hệ thống</h3>
+        </div>
+        <div class="card-body">
+          <div style="display: grid; gap: 1rem;">
+            <div>
+              <strong>📍 Company (Công ty)</strong>
+              <p style="margin: 0.5rem 0 0 1.5rem; color: var(--text-secondary);">
+                Mỗi công ty có thể có nhiều Admins để quản lý
+              </p>
+            </div>
+            <div>
+              <strong>📍 Admin (Quản trị viên)</strong>
+              <p style="margin: 0.5rem 0 0 1.5rem; color: var(--text-secondary);">
+                Admin tạo và quản lý các khảo sát, xem phân tích dữ liệu
+              </p>
+            </div>
+            <div>
+              <strong>📍 Survey (Khảo sát)</strong>
+              <p style="margin: 0.5rem 0 0 1.5rem; color: var(--text-secondary);">
+                Mỗi khảo sát chứa nhiều câu hỏi với các loại khác nhau
+              </p>
+            </div>
+            <div>
+              <strong>📍 Response (Câu trả lời)</strong>
+              <p style="margin: 0.5rem 0 0 1.5rem; color: var(--text-secondary);">
+                Người dùng cuối (end users) trả lời khảo sát công khai qua link
+              </p>
+            </div>
+          </div>
+          
+          <div style="margin-top: 2rem; padding: 1rem; background: var(--bg-tertiary); border-radius: 0.5rem;">
+            <strong>💡 Lưu ý:</strong> Để tham gia khảo sát, người dùng không cần đăng ký. Chỉ cần truy cập link khảo sát được chia sẻ bởi Admin.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section style="padding: 4rem 0; background: var(--bg-secondary);">
+    <div class="container">
+      <h2 class="text-center mb-4">Tính năng nổi bật</h2>
+      <div class="grid grid-3" style="margin-top: 3rem;">
+        <!-- Feature 1 -->
+        <div class="glass-card slide-in-right" style="animation-delay: 0.1s;">
+          <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
+          <h3>Nhiều loại câu hỏi</h3>
+          <p>Hỗ trợ text, radio, checkbox, date, table và nhiều dạng câu hỏi khác</p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="glass-card slide-in-right" style="animation-delay: 0.2s;">
+          <div style="font-size: 3rem; margin-bottom: 1rem;">🎯</div>
+          <h3>Logic điều kiện</h3>
+          <p>Chuyển hướng câu hỏi thông minh dựa trên câu trả lời của người dùng</p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="glass-card slide-in-right" style="animation-delay: 0.3s;">
+          <div style="font-size: 3rem; margin-bottom: 1rem;">📈</div>
+          <h3>Phân tích mạnh mẽ</h3>
+          <p>Biểu đồ trực quan, lọc dữ liệu, cross-tab và export CSV</p>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="glass-card slide-in-right" style="animation-delay: 0.4s;">
+          <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
+          <h3>Xác thực người dùng</h3>
+          <p>Xác thực qua email và SMS để đảm bảo chất lượng dữ liệu</p>
+        </div>
+
+        <!-- Feature 5 -->
+        <div class="glass-card slide-in-right" style="animation-delay: 0.5s;">
+          <div style="font-size: 3rem; margin-bottom: 1rem;">🎁</div>
+          <h3>Hệ thống thưởng</h3>
+          <p>Tích hợp phần thưởng để thu hút và động viên người tham gia</p>
+        </div>
+
+        <!-- Feature 6 -->
+        <div class="glass-card slide-in-right" style="animation-delay: 0.6s;">
+          <div style="font-size: 3rem; margin-bottom: 1rem;">⚡</div>
+          <h3>Nhanh & Hiệu quả</h3>
+          <p>Giao diện hiện đại, tốc độ xử lý nhanh, trải nghiệm mượt mà</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section style="padding: 6rem 0; text-align: center; background: var(--gradient-primary);">
+    <div class="container">
+      <h2 style="color: white; font-size: 3rem; margin-bottom: 1rem;">
+        Sẵn sàng bắt đầu?
+      </h2>
+      <p style="color: rgba(255,255,255,0.9); font-size: 1.25rem; margin-bottom: 2rem;">
+        Đăng ký Admin để tạo khảo sát đầu tiên của bạn ngay hôm nay
+      </p>
+      <a href="/admin/register" class="btn btn-lg" style="background: white; color: var(--primary);">
+        Đăng ký Admin miễn phí
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer style="padding: 2rem 0; background: var(--bg-secondary); text-align: center; border-top: 1px solid var(--border-color);">
+    <div class="container">
+      <p style="color: var(--text-muted);">
+        © 2025 SurveyPro AI. All rights reserved.
+      </p>
+    </div>
+  </footer>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
