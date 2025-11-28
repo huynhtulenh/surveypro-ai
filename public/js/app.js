@@ -1,5 +1,7 @@
-// API Configuration
-const API_BASE_URL = 'http://localhost:5000/api';
+// API Configuration - Auto-detect environment
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000/api'
+    : `${window.location.origin}/api`;
 
 // Note: End users (respondents) do NOT need authentication.
 // They only access public survey links: /survey/:id
@@ -69,7 +71,7 @@ const publicApi = {
             throw error;
         }
     },
-    
+
     async post(endpoint, data) {
         try {
             const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -265,7 +267,7 @@ function updateAdminNavbar() {
             const emailLi = document.createElement('li');
             emailLi.innerHTML = `<span class="nav-link admin-email">${admin.email}</span>`;
             navbarNav.appendChild(emailLi);
-            
+
             const logoutLi = document.createElement('li');
             logoutLi.innerHTML = `<button onclick="adminAuth.logout()" class="btn btn-sm btn-outline">Đăng xuất</button>`;
             navbarNav.appendChild(logoutLi);
@@ -276,11 +278,11 @@ function updateAdminNavbar() {
 // Initialize navbar on page load
 document.addEventListener('DOMContentLoaded', () => {
     // Auto-detect if on admin page or public page
-    const isAdminPage = window.location.pathname.includes('/admin') || 
-                        window.location.pathname.includes('/dashboard') ||
-                        window.location.pathname.includes('/create-survey') ||
-                        window.location.pathname.includes('/analytics');
-    
+    const isAdminPage = window.location.pathname.includes('/admin') ||
+        window.location.pathname.includes('/dashboard') ||
+        window.location.pathname.includes('/create-survey') ||
+        window.location.pathname.includes('/analytics');
+
     if (isAdminPage) {
         updateAdminNavbar();
     }
